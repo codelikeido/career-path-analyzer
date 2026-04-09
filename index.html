@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Predictive Career Path Analyzer</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f5f3;
+    --bg3: #eeede9;
+    --text: #1a1a18;
+    --text2: #6b6b67;
+    --text3: #9e9e99;
+    --border: rgba(0,0,0,0.12);
+    --border2: rgba(0,0,0,0.22);
+    --info-bg: #E6F1FB;
+    --info-text: #185FA5;
+    --success-bg: #EAF3DE;
+    --success-text: #3B6D11;
+    --warn-bg: #FAEEDA;
+    --warn-text: #854F0B;
+    --danger-bg: #FCEBEB;
+    --danger-text: #A32D2D;
+    --accent: #378ADD;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a;
+      --bg2: #252523;
+      --bg3: #2e2e2b;
+      --text: #f0efea;
+      --text2: #a8a8a2;
+      --text3: #6b6b67;
+      --border: rgba(255,255,255,0.12);
+      --border2: rgba(255,255,255,0.22);
+      --info-bg: #042C53;
+      --info-text: #85B7EB;
+      --success-bg: #173404;
+      --success-text: #97C459;
+      --warn-bg: #412402;
+      --warn-text: #EF9F27;
+      --danger-bg: #501313;
+      --danger-text: #F09595;
+      --accent: #378ADD;
+    }
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg3);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+  .container { max-width: 720px; margin: 0 auto; }
+  .header { margin-bottom: 2rem; }
+  .header h1 { font-size: 24px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+  .header p { font-size: 14px; color: var(--text2); }
+  .card {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+  .section-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text2);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .tag-input-wrap {
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius-md);
+    padding: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    cursor: text;
+    min-height: 46px;
+    background: var(--bg);
+  }
+  .tag-input-wrap:focus-within { border-color: var(--accent); }
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 12px;
+    color: var(--text);
+  }
+  .tag button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text3);
+    font-size: 15px;
+    line-height: 1;
+    padding: 0;
+  }
+  .tag-input {
+    border: none;
+    outline: none;
+    font-size: 13px;
+    background: transparent;
+    color: var(--text);
+    min-width: 100px;
+    flex: 1;
+  }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media(max-width:540px){ .grid2{ grid-template-columns:1fr; } }
+  select, input[type=text] {
+    width: 100%;
+    padding: 9px 12px;
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    background: var(--bg);
+    color: var(--text);
+    appearance: none;
+  }
+  select:focus, input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .hint { font-size: 11px; color: var(--text3); margin-top: 4px; }
+  .analyze-btn {
+    width: 100%;
+    padding: 13px;
+    border-radius: var(--radius-md);
+    background: var(--text);
+    color: var(--bg);
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: opacity .15s;
+  }
+  .analyze-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .analyze-btn:hover:not(:disabled) { opacity: .85; }
+  .results { margin-top: 1.5rem; }
+  .summary-box {
+    background: var(--bg2);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.7;
+    margin-bottom: 16px;
+  }
+  .role-card {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+  .role-card.top { border: 2px solid var(--accent); }
+  .top-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 500;
+    background: var(--info-bg);
+    color: var(--info-text);
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+  }
+  .role-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .role-name { font-size: 16px; font-weight: 500; color: var(--text); }
+  .match-badge { font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+  .match-high { background: var(--success-bg); color: var(--success-text); }
+  .match-med  { background: var(--warn-bg);    color: var(--warn-text); }
+  .salary { font-size: 13px; color: var(--text2); margin-bottom: 8px; }
+  .why { font-size: 12px; color: var(--text2); line-height: 1.6; margin-bottom: 12px; }
+  .bar-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
+  .bar-label span { font-size: 12px; color: var(--text2); }
+  .bar-label small { font-size: 11px; color: var(--text3); }
+  .bar-wrap { background: var(--bg2); border-radius: 4px; height: 5px; margin-bottom: 8px; }
+  .bar { height: 5px; border-radius: 4px; background: var(--accent); transition: width .7s ease; }
+  .missing-wrap { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+  .missing-label { font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+  .miss-tag {
+    font-size: 11px;
+    background: var(--bg2);
+    border: 0.5px solid var(--border);
+    border-radius: 20px;
+    padding: 2px 9px;
+    color: var(--text2);
+  }
+  .roadmap-card {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 18px;
+    margin-top: 4px;
+  }
+  .roadmap-title { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 16px; }
+  .timeline { position: relative; padding-left: 22px; }
+  .timeline::before { content:''; position:absolute; left:7px; top:5px; bottom:5px; width:1px; background:var(--border2); }
+  .tl-item { position: relative; margin-bottom: 18px; }
+  .tl-item:last-child { margin-bottom: 0; }
+  .tl-dot { position:absolute; left:-19px; top:4px; width:11px; height:11px; border-radius:50%; background:var(--accent); border: 2px solid var(--bg); }
+  .tl-period { font-size: 11px; color: var(--text3); margin-bottom: 2px; }
+  .tl-skill { font-size: 13px; font-weight: 500; color: var(--text); }
+  .tl-desc { font-size: 12px; color: var(--text2); margin-top: 2px; line-height: 1.5; }
+  .loading { text-align: center; padding: 2.5rem; color: var(--text2); font-size: 14px; }
+  .loading::after { content: ''; display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; margin-left: 8px; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error { background: var(--danger-bg); color: var(--danger-text); border-radius: var(--radius-md); padding: 13px 16px; font-size: 13px; margin-top: 12px; }
+  .api-note { font-size: 11px; color: var(--text3); text-align: center; margin-top: 1rem; }
+  .api-note a { color: var(--info-text); }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Predictive career path analyzer</h1>
+    <p>Enter your profile and get AI-predicted best-fit roles, salary ranges, and a personalized skill roadmap.</p>
+  </div>
+
+  <div class="card">
+    <div class="section-title">Your skills</div>
+    <div class="tag-input-wrap" id="skillsBox" onclick="document.getElementById('skillInput').focus()">
+      <input class="tag-input" id="skillInput" placeholder="Type a skill and press Enter..." autocomplete="off"/>
+    </div>
+    <p class="hint">e.g. Python, Machine Learning, SQL, Scikit-learn, Git, Pandas</p>
+  </div>
+
+  <div class="card">
+    <div class="grid2">
+      <div>
+        <div class="section-title">Education level</div>
+        <select id="education">
+          <option value="High School / 12th">High School / 12th</option>
+          <option value="Pursuing B.E / B.Tech" selected>Pursuing B.E / B.Tech</option>
+          <option value="B.E / B.Tech (completed)">B.E / B.Tech (completed)</option>
+          <option value="M.Tech / M.S">M.Tech / M.S</option>
+          <option value="PhD">PhD</option>
+        </select>
+      </div>
+      <div>
+        <div class="section-title">Field / domain</div>
+        <select id="domain">
+          <option value="Robotics and AI">Robotics & AI</option>
+          <option value="Computer Science">Computer Science</option>
+          <option value="Data Science">Data Science</option>
+          <option value="Electrical Engineering">Electrical Engineering</option>
+          <option value="Mechanical Engineering">Mechanical Engineering</option>
+        </select>
+      </div>
+      <div>
+        <div class="section-title">Experience</div>
+        <select id="experience">
+          <option value="0 (Student / Fresher)" selected>0 — Student / Fresher</option>
+          <option value="0–1 year">0–1 year</option>
+          <option value="1–3 years">1–3 years</option>
+          <option value="3–5 years">3–5 years</option>
+          <option value="5+ years">5+ years</option>
+        </select>
+      </div>
+      <div>
+        <div class="section-title">Career interest</div>
+        <select id="interest">
+          <option value="Machine Learning / AI">Machine Learning / AI</option>
+          <option value="Data Analytics">Data Analytics</option>
+          <option value="Robotics / Automation">Robotics / Automation</option>
+          <option value="Software Development">Software Development</option>
+          <option value="Research / Academia">Research / Academia</option>
+          <option value="Open / Not sure">Open / Not sure</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="padding:1rem 1.5rem">
+    <div class="section-title">Anthropic API key</div>
+    <input type="text" id="apiKey" placeholder="sk-ant-..." autocomplete="off" />
+    <p class="hint">Your key is never stored. Get one free at <a href="https://console.anthropic.com" target="_blank" style="color:#378ADD">console.anthropic.com</a></p>
+  </div>
+
+  <button class="analyze-btn" id="analyzeBtn" onclick="analyze()">Analyze my career path →</button>
+
+  <div id="results"></div>
+
+  <p class="api-note">Powered by Claude AI · Built with the Anthropic API</p>
+</div>
+
+<script>
+const skills = [];
+
+document.getElementById('skillInput').addEventListener('keydown', function(e){
+  if(e.key === 'Enter' || e.key === ','){
+    e.preventDefault();
+    const val = this.value.trim().replace(/,$/,'');
+    if(val && !skills.includes(val)){
+      skills.push(val);
+      renderTags();
+    }
+    this.value = '';
+  }
+});
+
+function renderTags(){
+  const box = document.getElementById('skillsBox');
+  const input = document.getElementById('skillInput');
+  box.querySelectorAll('.tag').forEach(t => t.remove());
+  skills.forEach((s,i) => {
+    const tag = document.createElement('div');
+    tag.className = 'tag';
+    tag.innerHTML = s + '<button type="button" onclick="removeSkill(' + i + ')">×</button>';
+    box.insertBefore(tag, input);
+  });
+}
+
+function removeSkill(i){
+  skills.splice(i,1);
+  renderTags();
+}
+
+async function analyze(){
+  const btn = document.getElementById('analyzeBtn');
+  const resultsDiv = document.getElementById('results');
+  const apiKey = document.getElementById('apiKey').value.trim();
+  const education = document.getElementById('education').value;
+  const domain = document.getElementById('domain').value;
+  const experience = document.getElementById('experience').value;
+  const interest = document.getElementById('interest').value;
+
+  if(skills.length < 2){
+    resultsDiv.innerHTML = '<div class="error">Please add at least 2 skills to get accurate predictions.</div>';
+    return;
+  }
+  if(!apiKey || !apiKey.startsWith('sk-ant')){
+    resultsDiv.innerHTML = '<div class="error">Please enter a valid Anthropic API key (starts with sk-ant-).</div>';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Analyzing...';
+  resultsDiv.innerHTML = '<div class="loading">Running prediction model, this takes a few seconds</div>';
+
+  const prompt = `You are a career prediction AI. Given this student/professional profile, predict career paths.
+
+Profile:
+- Skills: ${skills.join(', ')}
+- Education: ${education} in ${domain}
+- Experience: ${experience}
+- Career interest: ${interest}
+
+Respond ONLY with a valid JSON object. No markdown, no backticks, no explanation. Just raw JSON.
+
+Schema:
+{
+  "top_roles": [
+    {
+      "title": "Role name",
+      "match_percent": 85,
+      "salary_min_inr": 600000,
+      "salary_max_inr": 1200000,
+      "why_fit": "2 sentence explanation of why this fits the profile",
+      "skill_match": [
+        {"skill": "skill name", "coverage": 80}
+      ],
+      "missing_skills": ["skill1", "skill2"]
+    }
+  ],
+  "roadmap": [
+    {
+      "period": "0-3 months",
+      "skill": "Skill to learn",
+      "description": "Why and how to learn this"
+    }
+  ],
+  "summary": "2-3 sentence overall career outlook summary"
+}
+
+Rules:
+- Return exactly 3 roles in top_roles, ordered by match_percent descending
+- Each role has exactly 3 skill_match items and 2-3 missing_skills
+- Return exactly 4 roadmap items spanning 0-3mo, 3-6mo, 6-12mo, 12-24mo
+- Salary in Indian Rupees (INR) as integers
+- match_percent between 60-95
+- skill coverage between 40-95`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1200,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    if(data.error){ throw new Error(data.error.message); }
+    const text = data.content.map(b => b.text || '').join('');
+    const clean = text.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(clean);
+    renderResults(parsed);
+  } catch(err) {
+    resultsDiv.innerHTML = '<div class="error">Error: ' + (err.message || 'Something went wrong. Check your API key and try again.') + '</div>';
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Analyze my career path →';
+}
+
+function fmt(n){ return '₹' + (n/100000).toFixed(1) + 'L'; }
+
+function renderResults(d){
+  let html = '<div class="results">';
+  html += '<div class="summary-box">' + d.summary + '</div>';
+
+  d.top_roles.forEach((role, idx) => {
+    const isTop = idx === 0;
+    html += '<div class="role-card ' + (isTop ? 'top' : '') + '">';
+    if(isTop) html += '<div class="top-badge">Best match</div>';
+    html += '<div class="role-header"><div class="role-name">' + role.title + '</div>';
+    html += '<span class="match-badge ' + (role.match_percent >= 80 ? 'match-high' : 'match-med') + '">' + role.match_percent + '% match</span></div>';
+    html += '<div class="salary">Salary range: ' + fmt(role.salary_min_inr) + ' – ' + fmt(role.salary_max_inr) + ' / year</div>';
+    html += '<p class="why">' + role.why_fit + '</p>';
+
+    role.skill_match.forEach(s => {
+      html += '<div class="bar-label"><span>' + s.skill + '</span><small>' + s.coverage + '%</small></div>';
+      html += '<div class="bar-wrap"><div class="bar" style="width:' + s.coverage + '%"></div></div>';
+    });
+
+    if(role.missing_skills && role.missing_skills.length){
+      html += '<p class="missing-label" style="margin-top:10px">Skills to add:</p><div class="missing-wrap">';
+      role.missing_skills.forEach(s => { html += '<span class="miss-tag">' + s + '</span>'; });
+      html += '</div>';
+    }
+    html += '</div>';
+  });
+
+  html += '<div class="roadmap-card"><div class="roadmap-title">Skill growth roadmap</div><div class="timeline">';
+  d.roadmap.forEach(item => {
+    html += '<div class="tl-item"><div class="tl-dot"></div>';
+    html += '<div class="tl-period">' + item.period + '</div>';
+    html += '<div class="tl-skill">' + item.skill + '</div>';
+    html += '<div class="tl-desc">' + item.description + '</div></div>';
+  });
+  html += '</div></div></div>';
+
+  document.getElementById('results').innerHTML = html;
+}
+</script>
+</body>
+</html>
